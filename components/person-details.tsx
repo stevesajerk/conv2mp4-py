@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,10 @@ export function PersonDetails({ person, onBack, onTreeView, onPersonUpdate }: Pe
     personal: false,
   })
 
+  useEffect(() => {
+    setEditedPerson(person)
+  }, [person])
+
   const toggleSection = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
   }
@@ -40,6 +44,9 @@ export function PersonDetails({ person, onBack, onTreeView, onPersonUpdate }: Pe
     // Save the edited person data
     onPersonUpdate(editedPerson)
     setIsEditing(false)
+
+    // Show success message
+    alert("Changes saved successfully!")
   }
 
   const fetchDuolingoAvatar = async (username: string) => {

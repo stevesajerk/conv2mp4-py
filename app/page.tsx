@@ -9,31 +9,17 @@ import { PersonCircle } from "@/components/person-circle"
 import { PersonDetails } from "@/components/person-details"
 import { FamilyTree } from "@/components/family-tree"
 import { AddFamilyMember } from "@/components/add-family-member"
-import { UndoRedoControls } from "@/components/undo-redo-controls"
-import { UndoNotification } from "@/components/undo-notification"
 import { useTheme } from "@/components/theme-provider"
-import { useFamilyData } from "@/hooks/use-family-data"
+import { familyData, type Person } from "@/lib/family-data"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 
 export default function FamilyContactsApp() {
   const [currentView, setCurrentView] = useState<"home" | "details" | "tree" | "add">("home")
-  const [selectedPerson, setSelectedPerson] = useState<any>(null)
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [nextBirthday, setNextBirthday] = useState<{ person: any; daysUntil: number } | null>(null)
-  const [lastAction, setLastAction] = useState<any>(null)
+  const [nextBirthday, setNextBirthday] = useState<{ person: Person; daysUntil: number } | null>(null)
   const { theme } = useTheme()
-
-  const {
-    familyMembers,
-    actionHistory,
-    updatePerson,
-    addPerson,
-    deletePerson,
-    undo,
-    redo,
-    clearHistory,
-    canUndo,
-    canRedo,
-  } = useFamilyData()
+  const [familyMembers, setFamilyMembers] = useLocalStorage("family-members", familyData)
 
   // Current user (you can modify this to be dynamic)
   const currentUser = familyMembers.find((p) => p.id === "adam") || familyMembers[0]
@@ -62,17 +48,17 @@ export default function FamilyContactsApp() {
     }
   }, [familyMembers])
 
-  const handlePersonClick = (person: any) => {
+  const handlePersonClick = (person: Person) => {
     setSelectedPerson(person)
     setCurrentView("details")
   }
 
-  const handleTreeView = (person: any) => {
+  const handleTreeView = (person: Person) => {
     setSelectedPerson(person)
     setCurrentView("tree")
   }
 
-  const getGradientBackground = (person: any) => {
+  const getGradientBackground = (person: Person) => {
     if (!person.favoriteColor) return ""
     const color = person.favoriteColor
     return theme === "dark"
@@ -80,29 +66,21 @@ export default function FamilyContactsApp() {
       : `linear-gradient(135deg, ${color} 0%, #ffffff 100%)`
   }
 
-  const handlePersonUpdate = (updatedPerson: any) => {
-    updatePerson(updatedPerson)
-    setLastAction(actionHistory[actionHistory.length - 1])
+  const handlePersonUpdate = (updatedPerson: Person) => {
+    setFamilyMembers((prev) => prev.map((person) => (person.id === updatedPerson.id ? updatedPerson : person)))
   }
 
-  const handleAddFamilyMember = (newMember: any) => {
-    addPerson(newMember)
-    setLastAction(actionHistory[actionHistory.length - 1])
+  const handleAddFamilyMember = (newMember: Person) => {
+    setFamilyMembers((prev) => [...prev, newMember])
   }
 
-  const handleUndo = () => {
-    const undoneAction = undo()
-    if (undoneAction) {
-      setLastAction(null)
-    }
-  }
-
-  const handleRedo = () => {
-    const redoneAction = redo()
-    if (redoneAction) {
-      setLastAction(redoneAction)
-    }
-  }
+  // Filter family members based on search query
+  const filteredMembers = familyMembers.filter(
+    (person) =>
+      person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      person.phone?.includes(searchQuery),
+  )
 
   if (currentView === "details" && selectedPerson) {
     return (
@@ -170,6 +148,34 @@ export default function FamilyContactsApp() {
           />
         </div>
 
+        {/* Search Results */}
+        {searchQuery && (
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="font-semibold mb-3">Search Results ({filteredMembers.length})</h3>
+              {filteredMembers.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredMembers.map((person) => (
+                    <div
+                      key={person.id}
+                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted cursor-pointer"
+                      onClick={() => handlePersonClick(person)}
+                    >
+                      <PersonCircle person={person} size="small" />
+                      <div className="flex-1">
+                        <p className="font-medium">{person.name}</p>
+                        {person.email && <p className="text-sm text-muted-foreground">{person.email}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No family members found matching "{searchQuery}"</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Next Birthday */}
         {nextBirthday && (
           <Card className="bg-green-600 text-white">
@@ -191,19 +197,6 @@ export default function FamilyContactsApp() {
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-
-        {/* Undo/Redo Controls */}
-        <UndoRedoControls
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onClearHistory={clearHistory}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          actionHistory={actionHistory}
-        />
-
-        {/* Undo Notification */}
-        <UndoNotification action={lastAction} onUndo={handleUndo} onDismiss={() => setLastAction(null)} />
       </div>
     </div>
   )
