@@ -170,34 +170,34 @@ export const familyData: Person[] = [
   },
 ]
 
-export function getSpouse(personId: string): Person | null {
-  const person = familyData.find((p) => p.id === personId)
+export function getSpouse(personId: string, familyMembers: Person[] = familyData): Person | null {
+  const person = familyMembers.find((p) => p.id === personId)
   if (!person?.relationships?.spouse) return null
-  return familyData.find((p) => p.id === person.relationships.spouse) || null
+  return familyMembers.find((p) => p.id === person.relationships.spouse) || null
 }
 
-export function getChildren(personId: string): Person[] {
-  const person = familyData.find((p) => p.id === personId)
+export function getChildren(personId: string, familyMembers: Person[] = familyData): Person[] {
+  const person = familyMembers.find((p) => p.id === personId)
   if (!person?.relationships?.children) return []
-  return familyData.filter((p) => person.relationships.children?.includes(p.id))
+  return familyMembers.filter((p) => person.relationships.children?.includes(p.id))
 }
 
-export function getParents(personId: string): Person[] {
-  const person = familyData.find((p) => p.id === personId)
+export function getParents(personId: string, familyMembers: Person[] = familyData): Person[] {
+  const person = familyMembers.find((p) => p.id === personId)
   if (!person?.relationships?.parents) return []
-  return familyData.filter((p) => person.relationships.parents?.includes(p.id))
+  return familyMembers.filter((p) => person.relationships.parents?.includes(p.id))
 }
 
-export function getSiblings(personId: string): Person[] {
-  const person = familyData.find((p) => p.id === personId)
+export function getSiblings(personId: string, familyMembers: Person[] = familyData): Person[] {
+  const person = familyMembers.find((p) => p.id === personId)
   if (!person?.relationships?.siblings) return []
-  return familyData.filter((p) => person.relationships.siblings?.includes(p.id))
+  return familyMembers.filter((p) => person.relationships.siblings?.includes(p.id))
 }
 
-export function getPets(personId: string): Person[] {
+export function getPets(personId: string, familyMembers: Person[] = familyData): Person[] {
   // For this demo, pets are associated with Adam's family
   if (personId === "adam" || personId === "elaine") {
-    return familyData.filter((p) => ["martin", "dd", "mojo", "jc", "biff"].includes(p.id))
+    return familyMembers.filter((p) => ["martin", "dd", "mojo", "jc", "biff"].includes(p.id))
   }
   return []
 }

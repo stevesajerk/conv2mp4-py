@@ -11,6 +11,7 @@ import { FamilyTree } from "@/components/family-tree"
 import { AddFamilyMember } from "@/components/add-family-member"
 import { useTheme } from "@/components/theme-provider"
 import { familyData, type Person } from "@/lib/family-data"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 
 export default function FamilyContactsApp() {
   const [currentView, setCurrentView] = useState<"home" | "details" | "tree" | "add">("home")
@@ -18,14 +19,15 @@ export default function FamilyContactsApp() {
   const [searchQuery, setSearchQuery] = useState("")
   const [nextBirthday, setNextBirthday] = useState<{ person: Person; daysUntil: number } | null>(null)
   const { theme } = useTheme()
+  const [familyMembers, setFamilyMembers] = useLocalStorage("family-members", familyData)
 
   // Current user (you can modify this to be dynamic)
-  const currentUser = familyData.find((p) => p.id === "adam") || familyData[0]
+  const currentUser = familyMembers.find((p) => p.id === "adam") || familyMembers[0]
 
   useEffect(() => {
     // Calculate next birthday
     const today = new Date()
-    const birthdays = familyData
+    const birthdays = familyMembers
       .filter((person) => person.dateOfBirth && !person.deceased)
       .map((person) => {
         const birthDate = new Date(person.dateOfBirth!)
@@ -64,6 +66,14 @@ export default function FamilyContactsApp() {
       : `linear-gradient(135deg, ${color} 0%, #ffffff 100%)`
   }
 
+  const handlePersonUpdate = (updatedPerson: Person) => {
+    setFamilyMembers((prev) => prev.map((person) => (person.id === updatedPerson.id ? updatedPerson : person)))
+  }
+
+  const handleAddFamilyMember = (newMember: Person) => {
+    setFamilyMembers((prev) => [...prev, newMember])
+  }
+
   if (currentView === "details" && selectedPerson) {
     return (
       <div className="min-h-screen p-4" style={{ background: getGradientBackground(selectedPerson) }}>
@@ -71,6 +81,7 @@ export default function FamilyContactsApp() {
           person={selectedPerson}
           onBack={() => setCurrentView("home")}
           onTreeView={() => handleTreeView(selectedPerson)}
+          onPersonUpdate={handlePersonUpdate}
         />
       </div>
     )
@@ -81,6 +92,7 @@ export default function FamilyContactsApp() {
       <div className="min-h-screen p-4 bg-background">
         <FamilyTree
           person={selectedPerson}
+          familyMembers={familyMembers}
           onBack={() => setCurrentView("home")}
           onPersonClick={handlePersonClick}
           onAddMember={() => setCurrentView("add")}
@@ -92,7 +104,11 @@ export default function FamilyContactsApp() {
   if (currentView === "add") {
     return (
       <div className="min-h-screen p-4 bg-background">
-        <AddFamilyMember onBack={() => setCurrentView("home")} onSave={() => setCurrentView("home")} />
+        <AddFamilyMember
+          onBack={() => setCurrentView("home")}
+          onSave={() => setCurrentView("home")}
+          onAddMember={handleAddFamilyMember}
+        />
       </div>
     )
   }

@@ -9,19 +9,20 @@ import { type Person, getSpouse, getChildren, getParents, getSiblings, getPets }
 
 interface FamilyTreeProps {
   person: Person
+  familyMembers: Person[]
   onBack: () => void
   onPersonClick: (person: Person) => void
   onAddMember: () => void
 }
 
-export function FamilyTree({ person, onBack, onPersonClick, onAddMember }: FamilyTreeProps) {
+export function FamilyTree({ person, familyMembers, onBack, onPersonClick, onAddMember }: FamilyTreeProps) {
   const [viewType, setViewType] = useState<"immediate" | "origin">("immediate")
 
-  const spouse = getSpouse(person.id)
-  const children = getChildren(person.id)
-  const parents = getParents(person.id)
-  const siblings = getSiblings(person.id)
-  const pets = getPets(person.id)
+  const spouse = getSpouse(person.id, familyMembers)
+  const children = getChildren(person.id, familyMembers)
+  const parents = getParents(person.id, familyMembers)
+  const siblings = getSiblings(person.id, familyMembers)
+  const pets = getPets(person.id, familyMembers)
 
   const toggleView = () => {
     setViewType((prev) => (prev === "immediate" ? "origin" : "immediate"))

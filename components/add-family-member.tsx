@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import type { Person } from "@/types/person" // Declare the Person variable
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -16,9 +17,10 @@ import { PersonCircle } from "./person-circle"
 interface AddFamilyMemberProps {
   onBack: () => void
   onSave: () => void
+  onAddMember: (person: Person) => void
 }
 
-export function AddFamilyMember({ onBack, onSave }: AddFamilyMemberProps) {
+export function AddFamilyMember({ onBack, onSave, onAddMember }: AddFamilyMemberProps) {
   const [formData, setFormData] = useState({
     name: "",
     relationship: "",
@@ -58,13 +60,38 @@ export function AddFamilyMember({ onBack, onSave }: AddFamilyMemberProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, this would save to a database
-    console.log("Adding family member:", formData)
+
+    // Generate a unique ID for the new family member
+    const newId = `member_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    // Create the new family member object
+    const newMember: Person = {
+      id: newId,
+      name: formData.name,
+      email: formData.email || undefined,
+      phone: formData.phone || undefined,
+      address: formData.address || undefined,
+      dateOfBirth: formData.dateOfBirth || undefined,
+      favoriteColor: formData.favoriteColor,
+      notes: formData.notes || undefined,
+      avatar: formData.avatar || undefined,
+      duolingoUsername: formData.duolingoUsername || undefined,
+      relationships: {
+        // You can add relationship logic here based on the selected relationship
+      },
+    }
+
+    // Add the new member to the family data
+    onAddMember(newMember)
 
     if (formData.sendInvite && formData.email) {
-      // Send invitation email
+      // Send invitation email (mock implementation)
       console.log("Sending invitation to:", formData.email)
+      alert(`Invitation sent to ${formData.email}!`)
     }
+
+    // Show success message
+    alert(`${formData.name} has been added to the family!`)
 
     onSave()
   }

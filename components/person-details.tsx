@@ -15,9 +15,10 @@ interface PersonDetailsProps {
   person: Person
   onBack: () => void
   onTreeView: () => void
+  onPersonUpdate: (person: Person) => void
 }
 
-export function PersonDetails({ person, onBack, onTreeView }: PersonDetailsProps) {
+export function PersonDetails({ person, onBack, onTreeView, onPersonUpdate }: PersonDetailsProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedPerson, setEditedPerson] = useState(person)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -36,25 +37,28 @@ export function PersonDetails({ person, onBack, onTreeView }: PersonDetailsProps
   }
 
   const handleSave = () => {
-    // In a real app, this would save to a database
+    // Save the edited person data
+    onPersonUpdate(editedPerson)
     setIsEditing(false)
+
+    // Show success message
+    alert("Changes saved successfully!")
   }
 
   const fetchDuolingoAvatar = async (username: string) => {
     try {
-      // Note: This is a mock implementation since Duolingo's API is not publicly available
-      // In a real app, you'd need to use Duolingo's official API or web scraping
       const mockAvatarUrl = `https://d35aaqx5ub95lt.cloudfront.net/images/profile_pictures/${username}.svg`
 
-      // Test if the avatar exists
       const img = new Image()
       img.crossOrigin = "anonymous"
       img.onload = () => {
-        setEditedPerson((prev) => ({
-          ...prev,
+        const updatedPerson = {
+          ...editedPerson,
           avatar: mockAvatarUrl,
           duolingoUsername: username,
-        }))
+        }
+        setEditedPerson(updatedPerson)
+        onPersonUpdate(updatedPerson)
       }
       img.onerror = () => {
         alert("Could not find Duolingo avatar for this username. Please check the username or upload a photo instead.")
@@ -114,10 +118,12 @@ export function PersonDetails({ person, onBack, onTreeView }: PersonDetailsProps
                         if (file) {
                           const reader = new FileReader()
                           reader.onload = (event) => {
-                            setEditedPerson((prev) => ({
-                              ...prev,
+                            const updatedPerson = {
+                              ...editedPerson,
                               avatar: event.target?.result as string,
-                            }))
+                            }
+                            setEditedPerson(updatedPerson)
+                            onPersonUpdate(updatedPerson)
                           }
                           reader.readAsDataURL(file)
                         }
