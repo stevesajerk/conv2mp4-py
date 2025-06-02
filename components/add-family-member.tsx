@@ -87,11 +87,7 @@ export function AddFamilyMember({ onBack, onSave, onAddMember }: AddFamilyMember
     if (formData.sendInvite && formData.email) {
       // Send invitation email (mock implementation)
       console.log("Sending invitation to:", formData.email)
-      alert(`Invitation sent to ${formData.email}!`)
     }
-
-    // Show success message
-    alert(`${formData.name} has been added to the family!`)
 
     onSave()
   }

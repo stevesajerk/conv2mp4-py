@@ -9,17 +9,31 @@ import { PersonCircle } from "@/components/person-circle"
 import { PersonDetails } from "@/components/person-details"
 import { FamilyTree } from "@/components/family-tree"
 import { AddFamilyMember } from "@/components/add-family-member"
+import { UndoRedoControls } from "@/components/undo-redo-controls"
+import { UndoNotification } from "@/components/undo-notification"
 import { useTheme } from "@/components/theme-provider"
-import { familyData, type Person } from "@/lib/family-data"
-import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useFamilyData } from "@/hooks/use-family-data"
 
 export default function FamilyContactsApp() {
   const [currentView, setCurrentView] = useState<"home" | "details" | "tree" | "add">("home")
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
+  const [selectedPerson, setSelectedPerson] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [nextBirthday, setNextBirthday] = useState<{ person: Person; daysUntil: number } | null>(null)
+  const [nextBirthday, setNextBirthday] = useState<{ person: any; daysUntil: number } | null>(null)
+  const [lastAction, setLastAction] = useState<any>(null)
   const { theme } = useTheme()
-  const [familyMembers, setFamilyMembers] = useLocalStorage("family-members", familyData)
+
+  const {
+    familyMembers,
+    actionHistory,
+    updatePerson,
+    addPerson,
+    deletePerson,
+    undo,
+    redo,
+    clearHistory,
+    canUndo,
+    canRedo,
+  } = useFamilyData()
 
   // Current user (you can modify this to be dynamic)
   const currentUser = familyMembers.find((p) => p.id === "adam") || familyMembers[0]
@@ -46,19 +60,19 @@ export default function FamilyContactsApp() {
     if (birthdays.length > 0) {
       setNextBirthday(birthdays[0])
     }
-  }, [])
+  }, [familyMembers])
 
-  const handlePersonClick = (person: Person) => {
+  const handlePersonClick = (person: any) => {
     setSelectedPerson(person)
     setCurrentView("details")
   }
 
-  const handleTreeView = (person: Person) => {
+  const handleTreeView = (person: any) => {
     setSelectedPerson(person)
     setCurrentView("tree")
   }
 
-  const getGradientBackground = (person: Person) => {
+  const getGradientBackground = (person: any) => {
     if (!person.favoriteColor) return ""
     const color = person.favoriteColor
     return theme === "dark"
@@ -66,12 +80,28 @@ export default function FamilyContactsApp() {
       : `linear-gradient(135deg, ${color} 0%, #ffffff 100%)`
   }
 
-  const handlePersonUpdate = (updatedPerson: Person) => {
-    setFamilyMembers((prev) => prev.map((person) => (person.id === updatedPerson.id ? updatedPerson : person)))
+  const handlePersonUpdate = (updatedPerson: any) => {
+    updatePerson(updatedPerson)
+    setLastAction(actionHistory[actionHistory.length - 1])
   }
 
-  const handleAddFamilyMember = (newMember: Person) => {
-    setFamilyMembers((prev) => [...prev, newMember])
+  const handleAddFamilyMember = (newMember: any) => {
+    addPerson(newMember)
+    setLastAction(actionHistory[actionHistory.length - 1])
+  }
+
+  const handleUndo = () => {
+    const undoneAction = undo()
+    if (undoneAction) {
+      setLastAction(null)
+    }
+  }
+
+  const handleRedo = () => {
+    const redoneAction = redo()
+    if (redoneAction) {
+      setLastAction(redoneAction)
+    }
   }
 
   if (currentView === "details" && selectedPerson) {
@@ -161,6 +191,19 @@ export default function FamilyContactsApp() {
             <Plus className="w-4 h-4" />
           </Button>
         </div>
+
+        {/* Undo/Redo Controls */}
+        <UndoRedoControls
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onClearHistory={clearHistory}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          actionHistory={actionHistory}
+        />
+
+        {/* Undo Notification */}
+        <UndoNotification action={lastAction} onUndo={handleUndo} onDismiss={() => setLastAction(null)} />
       </div>
     </div>
   )

@@ -40,9 +40,6 @@ export function PersonDetails({ person, onBack, onTreeView, onPersonUpdate }: Pe
     // Save the edited person data
     onPersonUpdate(editedPerson)
     setIsEditing(false)
-
-    // Show success message
-    alert("Changes saved successfully!")
   }
 
   const fetchDuolingoAvatar = async (username: string) => {
